@@ -1,14 +1,11 @@
-import jwt, { SignOptions } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { Response } from "express";
-
+import dotenv from "dotenv";
 const generateToken = (res: Response, userId: string): string => {
-  const options: SignOptions = {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET as string, {
     expiresIn: "30d",
-  };
+  });
 
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET as string, options);
-
-  // Set JWT as an HTTP-Only Cookie
   res.cookie("jwt", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV !== "development",
