@@ -3,54 +3,79 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/userModel.js";
 import createToken from "../utils/createToken.js";
-import { string } from "zod";
-// Creating User
-const createUser = asyncHandler(async (req: Request, res: Response) => {
-  const { username, email, password } = req.body;
-  // console.log(username, email, password);
 
-  if (!username || !email || !password) {
-    throw new Error("Please fill al the credentials");
-  }
+const createUser = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const { username, email, password } = req.body;
 
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    return res.status(400).send("User already exists");
-  }
-  const salt = await bcrypt.genSalt(10);
-  const hashPassword = await bcrypt.hash(password, salt);
-  const newUser = new User({ username, email, password: hashPassword });
-  try {
-    await newUser.save();
-    createToken(res, newUser._id.toString());
-    res.status(200).json({
-      _id: newUser._id,
-      username: newUser.username,
-      email: newUser.email,
-      isAdmin: newUser.isAdmin,
-    });
-  } catch (error) {
-    throw new Error("invalid user data");
-  }
-});
-// Login the user
-const loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
+    if (!username || !email || !password) {
+      res.status(400);
+      throw new Error("Please fill all credentials");
+    }
+
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      res.status(400);
+      throw new Error("User already exists");
+    }
+
+    try {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const newUser = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+      });
+
+      createToken(res, newUser._id.toString());
+
+      res.status(201).json({
+        _id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        isAdmin: newUser.isAdmin,
+      });
+    } catch (error) {
+      console.error("Create User Error:", error);
+
+      res.status(500);
+      throw new Error("Invalid user data");
+    }
+  },
+);
+const loginUser = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const { email, password } = req.body;
+
+    const existingUser = await User.findOne({ email });
+
+    if (!existingUser) {
+      res.status(401);
+      throw new Error("Invalid email or password");
+    }
+
     const isPasswordValid = await bcrypt.compare(
       password,
       existingUser.password,
     );
-    if (isPasswordValid) {
-      res.status(201).json({
-        _id: existingUser._id,
-        username: existingUser.username,
-        email: existingUser.email,
-        isAdmin: existingUser.isAdmin,
-      });
-      return;
+
+    if (!isPasswordValid) {
+      res.status(401);
+      throw new Error("Invalid email or password");
     }
-  }
-});
+
+    createToken(res, existingUser._id.toString());
+
+    res.status(200).json({
+      _id: existingUser._id,
+      username: existingUser.username,
+      email: existingUser.email,
+      isAdmin: existingUser.isAdmin,
+    });
+  },
+);
+
 export { createUser, loginUser };

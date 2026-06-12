@@ -2,24 +2,27 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import User from "../models/userModel.js";
 import createToken from "../utils/createToken.js";
-// Creating User
 const createUser = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
-    // console.log(username, email, password);
     if (!username || !email || !password) {
-        throw new Error("Please fill al the credentials");
+        res.status(400);
+        throw new Error("Please fill all credentials");
     }
     const userExists = await User.findOne({ email });
     if (userExists) {
-        return res.status(400).send("User already exists");
+        res.status(400);
+        throw new Error("User already exists");
     }
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(password, salt);
-    const newUser = new User({ username, email, password: hashPassword });
     try {
-        await newUser.save();
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const newUser = await User.create({
+            username,
+            email,
+            password: hashedPassword,
+        });
         createToken(res, newUser._id.toString());
-        res.status(200).json({
+        res.status(201).json({
             _id: newUser._id,
             username: newUser.username,
             email: newUser.email,
@@ -27,24 +30,29 @@ const createUser = asyncHandler(async (req, res) => {
         });
     }
     catch (error) {
-        throw new Error("invalid user data");
+        console.error("Create User Error:", error);
+        res.status(500);
+        throw new Error("Invalid user data");
     }
 });
-// Login the user
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-        if (isPasswordValid) {
-            res.status(201).json({
-                _id: existingUser._id,
-                username: existingUser.username,
-                email: existingUser.email,
-                isAdmin: existingUser.isAdmin,
-            });
-            return;
-        }
+    if (!existingUser) {
+        res.status(401);
+        throw new Error("Invalid email or password");
     }
+    const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+    if (!isPasswordValid) {
+        res.status(401);
+        throw new Error("Invalid email or password");
+    }
+    createToken(res, existingUser._id.toString());
+    res.status(200).json({
+        _id: existingUser._id,
+        username: existingUser.username,
+        email: existingUser.email,
+        isAdmin: existingUser.isAdmin,
+    });
 });
 export { createUser, loginUser };
