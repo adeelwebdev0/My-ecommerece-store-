@@ -1,4 +1,3 @@
-
 import jwt, { SignOptions } from "jsonwebtoken";
 import { Response } from "express";
 
