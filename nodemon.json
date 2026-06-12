@@ -1,0 +1,7 @@
+{
+  "watch": ["backend"],
+  "ext": "ts",
+  "ignore": ["dist"],
+  "delay": 1000,
+  "exec": "tsc && node dist/backend/server.js"
+}
