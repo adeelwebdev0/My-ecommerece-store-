@@ -5,6 +5,7 @@ import {
   getAllUsers,
   getUserProfile,
   updateCurrentUserProfile,
+  deleteUserById,
 } from "../controllers/userControllers.js";
 import express from "express";
 import { validate } from "../middlewares/validate.js";
@@ -24,4 +25,5 @@ router
   .route("/profile")
   .get(authenticate, getUserProfile)
   .put(authenticate, updateCurrentUserProfile);
+router.route("/:id").delete(authenticate, authorizeAdmin, deleteUserById);
 export default router;

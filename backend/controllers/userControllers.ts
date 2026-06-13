@@ -121,7 +121,9 @@ const updateCurrentUserProfile = asyncHandler(
       user.username = req.body.username || user.username;
 
       if (req.body.password) {
-        user.password = req.body.password;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+        user.password = hashedPassword;
       }
 
       const updatedUser = await user.save();
@@ -138,6 +140,26 @@ const updateCurrentUserProfile = asyncHandler(
     }
   },
 );
+const deleteUserById = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+      if (user.isAdmin) {
+        res.status(400);
+        throw new Error("Admin user cannot be deleted");
+      }
+
+      await User.deleteOne({ _id: user._id });
+
+      res.json({ message: "User removed" });
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
+  },
+);
+
 export {
   createUser,
   loginUser,
@@ -145,4 +167,5 @@ export {
   getAllUsers,
   getUserProfile,
   updateCurrentUserProfile,
+  deleteUserById,
 };
