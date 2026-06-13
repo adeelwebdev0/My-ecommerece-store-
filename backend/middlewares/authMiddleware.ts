@@ -8,7 +8,7 @@ interface DecodedToken extends JwtPayload {
 }
 
 // Extend Express Request to include user
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: any; // you can replace `any` with your User type later
 }
 
