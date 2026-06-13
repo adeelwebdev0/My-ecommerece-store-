@@ -3,6 +3,7 @@ import User from "../models/userModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import createToken from "../utils/createToken.js";
+import { AuthRequest } from "../middlewares/authMiddleware.js";
 const createUser = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const { username, email, password } = req.body;
@@ -88,8 +89,60 @@ const logoutCurrentUser = asyncHandler(
     res.status(200).json({ message: "Logout succesfuly" });
   },
 );
+
+// geting all users
 const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   const users = await User.find({});
   res.json(users);
 });
-export { createUser, loginUser, logoutCurrentUser, getAllUsers };
+// getting current user file
+
+const getUserProfile = asyncHandler(
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      res.json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+      });
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
+  },
+);
+const updateCurrentUserProfile = asyncHandler(
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    const user = await User.findById(req.user?._id);
+
+    if (user) {
+      user.username = req.body.username || user.username;
+
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+      });
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
+  },
+);
+export {
+  createUser,
+  loginUser,
+  logoutCurrentUser,
+  getAllUsers,
+  getUserProfile,
+  updateCurrentUserProfile,
+};
