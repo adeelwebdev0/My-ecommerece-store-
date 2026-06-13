@@ -1,5 +1,5 @@
 const Navigation = () => {
-  return <></>;
+  return <>Navifation</>;
 };
 
 export default Navigation;
