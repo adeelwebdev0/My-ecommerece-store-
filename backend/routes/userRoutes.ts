@@ -3,6 +3,8 @@ import {
   loginUser,
   logoutCurrentUser,
   getAllUsers,
+  getUserProfile,
+  updateCurrentUserProfile,
 } from "../controllers/userControllers.js";
 import express from "express";
 import { validate } from "../middlewares/validate.js";
@@ -18,5 +20,8 @@ router
 
 router.post("/loginUser", validate(loginSchema), loginUser);
 router.post("/logout", logoutCurrentUser);
-
+router
+  .route("/profile")
+  .get(authenticate, getUserProfile)
+  .put(authenticate, updateCurrentUserProfile);
 export default router;
