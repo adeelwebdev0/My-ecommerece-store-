@@ -6,6 +6,8 @@ import {
   getUserProfile,
   updateCurrentUserProfile,
   deleteUserById,
+  getUserById,
+  updateUserById,
 } from "../controllers/userControllers.js";
 import express from "express";
 import { validate } from "../middlewares/validate.js";
@@ -25,5 +27,9 @@ router
   .route("/profile")
   .get(authenticate, getUserProfile)
   .put(authenticate, updateCurrentUserProfile);
-router.route("/:id").delete(authenticate, authorizeAdmin, deleteUserById);
+router
+  .route("/:id")
+  .delete(authenticate, authorizeAdmin, deleteUserById)
+  .get(authenticate, authorizeAdmin, getUserById)
+  .put(authenticate, authorizeAdmin, updateUserById);
 export default router;

@@ -159,7 +159,44 @@ const deleteUserById = asyncHandler(
     }
   },
 );
+const getUserById = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const user = await User.findById(req.params.id).select("-password");
 
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
+  },
+);
+const updateUserById = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+      user.username = req.body.username || user.username;
+      user.email = req.body.email || user.email;
+
+      if (req.body.isAdmin !== undefined) {
+        user.isAdmin = req.body.isAdmin;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+      });
+    } else {
+      res.status(404);
+      throw new Error("User not found");
+    }
+  },
+);
 export {
   createUser,
   loginUser,
@@ -168,4 +205,6 @@ export {
   getUserProfile,
   updateCurrentUserProfile,
   deleteUserById,
+  getUserById,
+  updateUserById,
 };
